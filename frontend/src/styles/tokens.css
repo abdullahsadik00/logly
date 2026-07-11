@@ -1,0 +1,60 @@
+/**
+ * Logly design tokens — Design System brief (Phase 15).
+ *
+ * Two layers:
+ *  1. Primitive tokens — raw values, referenced only by the semantic layer.
+ *  2. Semantic tokens — what components consume (via Tailwind utilities that
+ *     resolve `rgb(var(--c-*) / <alpha-value>)`, so opacity modifiers like
+ *     `bg-accent/10` work and a future light theme is a `:root` var swap).
+ *
+ * Colors are stored as space-separated RGB channel triplets so Tailwind can
+ * inject the alpha channel. Non-color scalars are stored as-is.
+ */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────── */
+  --c-bg-base: 8 9 11; /* #08090B page background */
+  --c-bg-panel: 11 12 14; /* #0B0C0E */
+  --c-bg-raised: 15 17 19; /* #0F1113 */
+  --c-surface: 20 22 25; /* #141619 card */
+  --c-surface-hover: 31 35 41; /* #1F2329 */
+
+  /* ── Borders ──────────────────────────────────────────────── */
+  --c-border-subtle: 28 32 37; /* #1C2025 */
+  --c-border: 40 45 52; /* #282D34 */
+  --c-border-strong: 58 64 72; /* #3A4048 */
+
+  /* ── Text ─────────────────────────────────────────────────── */
+  --c-fg: 242 244 247; /* #F2F4F7 primary */
+  --c-fg-secondary: 162 170 180; /* #A2AAB4 */
+  --c-fg-muted: 107 114 124; /* #6B727C */
+  --c-fg-faint: 71 77 85; /* #474D55 */
+
+  /* ── Accents / semantic ───────────────────────────────────── */
+  --c-accent: 22 201 138; /* #16C98A success / primary accent */
+  --c-accent-contrast: 8 9 11; /* on-accent text */
+  --c-danger: 244 81 91; /* #F4515B */
+  --c-warning: 245 165 36; /* #F5A524 */
+  --c-info: 59 158 255; /* #3B9EFF */
+  --c-violet: 160 123 255; /* #A07BFF */
+  --c-teal: 45 212 191; /* #2DD4BF */
+
+  /* ── Radii ────────────────────────────────────────────────── */
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 11px;
+  --radius-xl: 14px;
+
+  /* ── Elevation ────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 32px 80px rgba(0, 0, 0, 0.6);
+
+  /* ── Motion ───────────────────────────────────────────────── */
+  --ease-brand: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-instant: 120ms;
+  --dur-fast: 160ms;
+  --dur-base: 220ms;
+  --dur-slow: 360ms;
+}

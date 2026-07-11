@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  plan         String    @default("free")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  projects     Project[]
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  domain      String
+  trackingId  String   @unique @default(uuid()) @map("tracking_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      Event[]
+  dailyStats  DailyStat[]
+  alerts      Alert[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  type        String
+  page        String
+  referrer    String?
+  country     String?
+  deviceType  String?  @map("device_type")
+  eventName   String?  @map("event_name")
+  eventProps  Json?    @map("event_props")
+  visitorId   String?  @map("visitor_id")
+  sessionId   String?  @map("session_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([projectId, type])
+  @@map("events")
+}
+
+model DailyStat {
+  projectId String   @map("project_id")
+  date      DateTime @db.Date
+  views     Int      @default(0)
+  visitors  Int      @default(0)
+  sessions  Int      @default(0)
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, date])
+  @@map("daily_stats")
+}
+
+model Alert {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  type         String
+  thresholdPct Int      @map("threshold_pct")
+  emails       String[]
+  lastTriggered DateTime? @map("last_triggered")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("alerts")
+}
