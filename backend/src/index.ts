@@ -1,4 +1,8 @@
 import path from 'path';
+// Side-effect import: patches Express 4 so a `throw` inside an async route handler
+// is routed to errorHandler instead of becoming an unhandled rejection that hangs
+// the connection. Must be imported before any routes are registered.
+import 'express-async-errors';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
