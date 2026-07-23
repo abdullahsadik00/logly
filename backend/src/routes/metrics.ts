@@ -2,11 +2,10 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
 import { requireAuth } from '../middleware/auth';
+import { verifyToken } from '../lib/jwt';
 import { ApiError } from '../middleware/errorHandler';
 
 export const metricsRouter = Router();
-
-metricsRouter.use(requireAuth);
 
 async function verifyOwnership(projectId: string, userId: string) {
   const project = await prisma.project.findFirst({
@@ -44,7 +43,7 @@ async function computeBounceRate(projectId: string, from: Date): Promise<number>
 }
 
 // GET /api/projects/:id/metrics/today
-metricsRouter.get('/:id/metrics/today', async (req: Request, res: Response) => {
+metricsRouter.get('/:id/metrics/today', requireAuth, async (req: Request, res: Response) => {
   const project = await verifyOwnership(req.params.id, req.userId);
   const projectId = project.id;
 
@@ -84,7 +83,7 @@ metricsRouter.get('/:id/metrics/today', async (req: Request, res: Response) => {
 });
 
 // GET /api/projects/:id/metrics/trend
-metricsRouter.get('/:id/metrics/trend', async (req: Request, res: Response) => {
+metricsRouter.get('/:id/metrics/trend', requireAuth, async (req: Request, res: Response) => {
   const project = await verifyOwnership(req.params.id, req.userId);
   const projectId = project.id;
 
@@ -109,7 +108,7 @@ metricsRouter.get('/:id/metrics/trend', async (req: Request, res: Response) => {
 });
 
 // GET /api/projects/:id/metrics/pages
-metricsRouter.get('/:id/metrics/pages', async (req: Request, res: Response) => {
+metricsRouter.get('/:id/metrics/pages', requireAuth, async (req: Request, res: Response) => {
   const project = await verifyOwnership(req.params.id, req.userId);
   const projectId = project.id;
 
@@ -155,7 +154,7 @@ metricsRouter.get('/:id/metrics/pages', async (req: Request, res: Response) => {
 });
 
 // GET /api/projects/:id/metrics/events
-metricsRouter.get('/:id/metrics/events', async (req: Request, res: Response) => {
+metricsRouter.get('/:id/metrics/events', requireAuth, async (req: Request, res: Response) => {
   const project = await verifyOwnership(req.params.id, req.userId);
   const projectId = project.id;
 
@@ -187,7 +186,19 @@ metricsRouter.get('/:id/metrics/events', async (req: Request, res: Response) => 
 
 // GET /api/projects/:id/metrics/realtime (SSE)
 metricsRouter.get('/:id/metrics/realtime', async (req: Request, res: Response) => {
-  const project = await verifyOwnership(req.params.id, req.userId);
+  // EventSource cannot set an Authorization header, so the SSE stream
+  // authenticates via a ?token= query param instead of requireAuth.
+  // TODO(stage-2): issue a short-lived single-use SSE ticket so a long-lived
+  // JWT does not end up in URLs / access logs.
+  const token = typeof req.query.token === 'string' ? req.query.token : '';
+  let userId: string;
+  try {
+    userId = verifyToken(token).sub;
+  } catch {
+    throw new ApiError(401, 'Invalid or missing token');
+  }
+
+  const project = await verifyOwnership(req.params.id, userId);
   const projectId = project.id;
 
   res.set({

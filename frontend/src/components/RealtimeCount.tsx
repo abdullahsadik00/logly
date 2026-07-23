@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
 
 interface RealtimeCountProps {
   projectId: string;
@@ -18,7 +19,10 @@ export default function RealtimeCount({ projectId }: RealtimeCountProps) {
     function connect() {
       if (destroyed) return;
 
-      const url = `${BASE_URL}/api/projects/${projectId}/metrics/realtime`;
+      // EventSource can't send an Authorization header, so pass the JWT as a
+      // query param — the SSE route authenticates from ?token=.
+      const token = useAuthStore.getState().token;
+      const url = `${BASE_URL}/api/projects/${projectId}/metrics/realtime?token=${encodeURIComponent(token ?? '')}`;
       const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
 

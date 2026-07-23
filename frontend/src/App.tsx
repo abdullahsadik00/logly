@@ -27,9 +27,9 @@ function RouteFallback() {
 /** Redirects unauthenticated users to /login */
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
-  // if (!user) {
-  //   return <Navigate to="/login" replace />;
-  // }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 }
 
