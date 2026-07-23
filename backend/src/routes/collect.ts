@@ -15,6 +15,7 @@ const collectSchema = z.object({
   eventName: z.string().max(100).optional(),
   eventProps: z.record(z.unknown()).optional(),
   sessionId: z.string().uuid().optional(),
+  attributionRef: z.string().uuid().optional(),
 });
 
 type CollectBody = z.infer<typeof collectSchema>;
@@ -99,6 +100,7 @@ collectRouter.post('/:trackingId', async (req: Request, res: Response) => {
     eventProps: body.eventProps ?? null,
     visitorId,
     sessionId: body.sessionId ?? null,
+    attributionRef: body.attributionRef ?? null,
     createdAt: new Date().toISOString(),
   };
 

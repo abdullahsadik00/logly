@@ -17,6 +17,7 @@ interface RawEvent {
   eventProps: Record<string, unknown> | null;
   visitorId: string | null;
   sessionId: string | null;
+  attributionRef: string | null;
   createdAt: string;
 }
 
@@ -59,6 +60,7 @@ async function flushProject(projectId: string): Promise<void> {
         eventProps: (e.eventProps ?? undefined) as Prisma.InputJsonValue | undefined,
         visitorId: e.visitorId,
         sessionId: e.sessionId,
+        attributionRef: e.attributionRef,
         createdAt: new Date(e.createdAt),
       })),
       skipDuplicates: true,

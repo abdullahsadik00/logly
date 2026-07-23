@@ -128,6 +128,81 @@ function TopEventsTable({ projectId }: { projectId: string }) {
   );
 }
 
+interface RevenueBySource {
+  data: { source: string; amountCents: number }[];
+  meta: { currency: string | null; totalCents: number };
+}
+
+/** Formats integer cents as a currency string, e.g. 1999 -> "$19.99". */
+function formatMoney(cents: number, currency: string | null): string {
+  const amount = cents / 100;
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: (currency ?? 'usd').toUpperCase(),
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${(currency ?? '').toUpperCase()}`.trim();
+  }
+}
+
+// v0 revenue attribution: the wedge number. Revenue grouped by the acquisition
+// source Logly derived server-side from the observed visit.
+function RevenueBySourceCard({ projectId }: { projectId: string }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: metricsKeys.revenueBySource(projectId),
+    queryFn: () =>
+      api.get<RevenueBySource>(`/api/projects/${projectId}/metrics/revenue-by-source`),
+  });
+
+  const rows = data?.data ?? [];
+  const currency = data?.meta.currency ?? null;
+
+  return (
+    <Card className="p-5">
+      <h2 className="mb-1 text-sm font-semibold text-fg-secondary">Revenue by source</h2>
+      {!isLoading && !isError && (
+        <p className="mb-4 text-2xl font-bold text-fg">
+          {formatMoney(data?.meta.totalCents ?? 0, currency)}
+        </p>
+      )}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-8 animate-pulse rounded bg-surface-hover" />
+          ))}
+        </div>
+      ) : isError ? (
+        <CardError message="Couldn't load revenue. Please retry." />
+      ) : rows.length === 0 ? (
+        <div className="py-4 text-center">
+          <p className="text-sm text-fg-muted">No revenue attributed yet</p>
+          <p className="mt-1 text-xs text-fg-faint">Connect Stripe and pass the attribution ref at signup</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-line text-xs text-fg-muted">
+                <th className="pb-2 text-left font-medium">Source</th>
+                <th className="pb-2 text-right font-medium">Revenue</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line-subtle">
+              {rows.map((r) => (
+                <tr key={r.source} className="transition-colors hover:bg-surface-hover">
+                  <td className="py-2 pr-4 text-fg">{r.source}</td>
+                  <td className="py-2 text-right text-fg-secondary">{formatMoney(r.amountCents, currency)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function DashboardPage() {
   const { id } = useParams<{ id: string }>();
   const projectId = id!;
@@ -196,6 +271,9 @@ export default function DashboardPage() {
           <p className="py-8 text-center text-sm text-fg-muted">Switch to 7d or 30d to see the trend chart</p>
         </Card>
       )}
+
+      {/* Revenue attribution (v0 wedge) */}
+      <RevenueBySourceCard projectId={projectId} />
 
       {/* Breakdowns */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

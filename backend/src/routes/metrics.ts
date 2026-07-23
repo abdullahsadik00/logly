@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
 import { requireAuth } from '../middleware/auth';
 import { verifyToken } from '../lib/jwt';
+import { deriveSource } from '../lib/deriveSource';
 import { ApiError } from '../middleware/errorHandler';
 
 export const metricsRouter = Router();
@@ -226,3 +227,59 @@ metricsRouter.get('/:id/metrics/realtime', async (req: Request, res: Response) =
     res.end();
   });
 });
+
+// GET /api/projects/:id/metrics/revenue-by-source
+// v0 revenue attribution read model. Sums payment amounts (refunds are negative)
+// grouped by the acquisition source, which is derived SERVER-SIDE from the
+// observed collect Event that carries the payment's attribution_ref — never from
+// anything the client supplied. Low volume in v0, so we derive in JS.
+metricsRouter.get(
+  '/:id/metrics/revenue-by-source',
+  requireAuth,
+  async (req: Request, res: Response) => {
+    const project = await verifyOwnership(req.params.id, req.userId);
+    const projectId = project.id;
+
+    const from = req.query.from ? new Date(String(req.query.from)) : new Date(0);
+    const to = req.query.to ? new Date(String(req.query.to)) : new Date();
+
+    const payments = await prisma.payment.findMany({
+      where: { projectId, createdAt: { gte: from, lte: to } },
+      select: { amountCents: true, currency: true, attributionRef: true },
+    });
+
+    // Build ref -> first observed event (page/referrer) for source derivation.
+    const refs = [...new Set(payments.map((p) => p.attributionRef).filter((r): r is string => !!r))];
+    const refToEvent = new Map<string, { page: string; referrer: string | null }>();
+    if (refs.length > 0) {
+      const events = await prisma.event.findMany({
+        where: { projectId, attributionRef: { in: refs } },
+        orderBy: { createdAt: 'asc' },
+        select: { attributionRef: true, page: true, referrer: true },
+      });
+      for (const e of events) {
+        if (e.attributionRef && !refToEvent.has(e.attributionRef)) {
+          refToEvent.set(e.attributionRef, { page: e.page, referrer: e.referrer });
+        }
+      }
+    }
+
+    const bySource = new Map<string, number>();
+    let currency: string | null = null;
+    for (const p of payments) {
+      currency = currency ?? p.currency;
+      const ev = p.attributionRef ? refToEvent.get(p.attributionRef) : undefined;
+      const source = ev ? deriveSource(ev.page, ev.referrer) : 'direct';
+      bySource.set(source, (bySource.get(source) ?? 0) + p.amountCents);
+    }
+
+    const rows = [...bySource.entries()]
+      .map(([source, amountCents]) => ({ source, amountCents }))
+      .sort((a, b) => b.amountCents - a.amountCents);
+
+    res.json({
+      data: rows,
+      meta: { currency, totalCents: rows.reduce((s, r) => s + r.amountCents, 0) },
+    });
+  },
+);

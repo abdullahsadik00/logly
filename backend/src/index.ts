@@ -10,6 +10,8 @@ import { projectsRouter } from './routes/projects';
 import { collectRouter } from './routes/collect';
 import { metricsRouter } from './routes/metrics';
 import { eventsRouter } from './routes/events';
+import { attributionRouter } from './routes/attribution';
+import { stripeWebhookRouter } from './routes/stripeWebhook';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
@@ -17,6 +19,13 @@ const app = express();
 app.use(helmet());
 app.use(cookieParser());
 app.use(compression());
+
+// Stripe webhook MUST be mounted before the global JSON parser: it uses
+// express.raw() (inside the router) so signature verification sees the exact
+// bytes Stripe signed. If express.json() ran first it would re-serialize the
+// body and every signature check would fail.
+app.use('/api/stripe/webhook', stripeWebhookRouter);
+
 app.use(express.json());
 
 // CORS for regular API routes
@@ -41,6 +50,7 @@ app.use('/api/projects', projectsRouter);
 app.use('/api/projects', metricsRouter);
 app.use('/api/projects', eventsRouter);
 app.use('/api/collect', collectRouter); // no rate limit, no global cors
+app.use('/api/attribution', attributionRouter); // public (customer site/app); router has its own limiter
 
 // Serve the tracking SDK as a public static asset. It is embedded via
 // <script src> on third-party sites, so it must be loadable cross-origin:
