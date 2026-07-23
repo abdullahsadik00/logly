@@ -64,16 +64,16 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-base">
       {/* Top nav */}
-      <header className="border-b border-slate-800">
+      <header className="border-b border-line-subtle">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <span className="text-xl font-bold text-white tracking-tight">Logly</span>
+          <span className="text-xl font-bold text-fg tracking-tight">Logly</span>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">{user?.email}</span>
+            <span className="text-sm text-fg-secondary">{user?.email}</span>
             <button
               onClick={handleLogout}
-              className="text-sm text-slate-400 hover:text-white transition"
+              className="text-sm text-fg-secondary hover:text-fg transition"
             >
               Sign out
             </button>
@@ -84,15 +84,15 @@ export default function ProjectsPage() {
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Your projects</h1>
-            <p className="text-sm text-slate-400 mt-0.5">Each project tracks one website or app.</p>
+            <h1 className="text-2xl font-bold text-fg">Your projects</h1>
+            <p className="text-sm text-fg-secondary mt-0.5">Each project tracks one website or app.</p>
           </div>
           <button
             onClick={() => {
               setShowModal(true);
               setFormError(null);
             }}
-            className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="rounded-lg bg-accent hover:brightness-105 text-accent-contrast text-sm font-medium px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-accent"
           >
             + New project
           </button>
@@ -102,9 +102,9 @@ export default function ProjectsPage() {
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-slate-800 rounded-xl border border-slate-700 p-5 animate-pulse">
-                <div className="h-4 bg-slate-700 rounded w-2/3 mb-3" />
-                <div className="h-3 bg-slate-700 rounded w-1/2" />
+              <div key={i} className="bg-surface rounded-xl border border-line p-5 animate-pulse">
+                <div className="h-4 bg-surface-hover rounded w-2/3 mb-3" />
+                <div className="h-3 bg-surface-hover rounded w-1/2" />
               </div>
             ))}
           </div>
@@ -112,7 +112,7 @@ export default function ProjectsPage() {
 
         {/* Error state */}
         {error && (
-          <div className="rounded-lg bg-red-950 border border-red-800 px-4 py-3 text-sm text-red-300">
+          <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
             Failed to load projects. Please refresh the page.
           </div>
         )}
@@ -121,13 +121,13 @@ export default function ProjectsPage() {
         {!isLoading && !error && projects.length === 0 && (
           <div className="text-center py-20">
             <p className="text-4xl mb-4">📊</p>
-            <h2 className="text-lg font-semibold text-white mb-1">No projects yet</h2>
-            <p className="text-sm text-slate-400 mb-6">
+            <h2 className="text-lg font-semibold text-fg mb-1">No projects yet</h2>
+            <p className="text-sm text-fg-secondary mb-6">
               Create your first project and drop the tracking script in your app.
             </p>
             <button
               onClick={() => setShowModal(true)}
-              className="rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-5 py-2.5 transition"
+              className="rounded-lg bg-accent hover:brightness-105 text-accent-contrast text-sm font-medium px-5 py-2.5 transition"
             >
               Create a project
             </button>
@@ -140,21 +140,21 @@ export default function ProjectsPage() {
             {projects.map((project) => (
               <div
                 key={project.id}
-                className="bg-slate-800 rounded-xl border border-slate-700 p-5 hover:border-slate-600 transition"
+                className="bg-surface rounded-xl border border-line p-5 hover:border-line-strong transition"
               >
-                <h2 className="font-semibold text-white text-base truncate">{project.name}</h2>
-                <p className="text-sm text-slate-400 mt-0.5 truncate">{project.domain}</p>
-                <p className="text-xs text-slate-600 mt-1 font-mono truncate">{project.trackingId}</p>
+                <h2 className="font-semibold text-fg text-base truncate">{project.name}</h2>
+                <p className="text-sm text-fg-secondary mt-0.5 truncate">{project.domain}</p>
+                <p className="text-xs text-fg-faint mt-1 font-mono truncate">{project.trackingId}</p>
                 <div className="mt-4 flex gap-2">
                   <Link
                     to={`/projects/${project.id}`}
-                    className="flex-1 text-center rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium py-1.5 transition"
+                    className="flex-1 text-center rounded-lg bg-surface-hover hover:brightness-110 text-fg text-sm font-medium py-1.5 transition"
                   >
                     View Dashboard
                   </Link>
                   <Link
                     to={`/projects/${project.id}/settings`}
-                    className="rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm px-3 py-1.5 transition"
+                    className="rounded-lg bg-surface-hover hover:brightness-110 text-fg-secondary text-sm px-3 py-1.5 transition"
                     aria-label="Settings"
                   >
                     ⚙
@@ -169,17 +169,17 @@ export default function ProjectsPage() {
       {/* New Project Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-dialog px-4"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowModal(false);
           }}
         >
-          <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-lg font-semibold text-white mb-5">New project</h2>
+          <div className="bg-surface rounded-xl border border-line p-6 w-full max-w-md shadow-xl">
+            <h2 className="text-lg font-semibold text-fg mb-5">New project</h2>
 
             <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div>
-                <label htmlFor="proj-name" className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label htmlFor="proj-name" className="block text-sm font-medium text-fg-secondary mb-1.5">
                   Project name
                 </label>
                 <input
@@ -188,13 +188,13 @@ export default function ProjectsPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  className="w-full rounded-lg bg-base border border-line-strong px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
                   placeholder="My App"
                 />
               </div>
 
               <div>
-                <label htmlFor="proj-domain" className="block text-sm font-medium text-slate-300 mb-1.5">
+                <label htmlFor="proj-domain" className="block text-sm font-medium text-fg-secondary mb-1.5">
                   Domain
                 </label>
                 <input
@@ -203,14 +203,14 @@ export default function ProjectsPage() {
                   required
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                  className="w-full rounded-lg bg-base border border-line-strong px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition"
                   placeholder="myapp.com"
                 />
-                <p className="mt-1 text-xs text-slate-500">Without https:// or trailing slash</p>
+                <p className="mt-1 text-xs text-fg-muted">Without https:// or trailing slash</p>
               </div>
 
               {formError && (
-                <div role="alert" className="rounded-lg bg-red-950 border border-red-800 px-3 py-2 text-sm text-red-300">
+                <div role="alert" className="rounded-lg bg-danger/10 border border-danger/30 px-3 py-2 text-sm text-danger">
                   {formError}
                 </div>
               )}
@@ -219,14 +219,14 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 rounded-lg border border-slate-600 hover:border-slate-500 text-slate-300 text-sm font-medium py-2 transition"
+                  className="flex-1 rounded-lg border border-line-strong hover:border-line-strong text-fg-secondary text-sm font-medium py-2 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="flex-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white text-sm font-medium py-2 transition"
+                  className="flex-1 rounded-lg bg-accent hover:brightness-105 disabled:opacity-disabled disabled:cursor-not-allowed text-accent-contrast text-sm font-medium py-2 transition"
                 >
                   {createMutation.isPending ? 'Creating…' : 'Create project'}
                 </button>

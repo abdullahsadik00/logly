@@ -22,8 +22,17 @@ function dateRangeToDays(range: DateRange): number {
   return 1;
 }
 
+/** Consistent inline error state for a dashboard card. */
+function CardError({ message }: { message: string }) {
+  return (
+    <div className="rounded-md border border-danger/30 bg-danger/10 px-3 py-4 text-center text-sm text-danger">
+      {message}
+    </div>
+  );
+}
+
 function TopPagesTable({ projectId }: { projectId: string }) {
-  const { data: pages = [], isLoading } = useQuery({
+  const { data: pages = [], isLoading, isError } = useQuery({
     queryKey: metricsKeys.pages(projectId),
     queryFn: () => api.get<PageStat[]>(`/api/projects/${projectId}/metrics/pages`),
   });
@@ -37,6 +46,8 @@ function TopPagesTable({ projectId }: { projectId: string }) {
             <div key={i} className="h-8 animate-pulse rounded bg-surface-hover" />
           ))}
         </div>
+      ) : isError ? (
+        <CardError message="Couldn't load top pages. Please retry." />
       ) : pages.length === 0 ? (
         <p className="py-4 text-center text-sm text-fg-muted">No page data yet</p>
       ) : (
@@ -68,7 +79,7 @@ function TopPagesTable({ projectId }: { projectId: string }) {
 }
 
 function TopEventsTable({ projectId }: { projectId: string }) {
-  const { data: events = [], isLoading } = useQuery({
+  const { data: events = [], isLoading, isError } = useQuery({
     queryKey: metricsKeys.events(projectId),
     queryFn: () => api.get<EventStat[]>(`/api/projects/${projectId}/metrics/events`),
   });
@@ -82,6 +93,8 @@ function TopEventsTable({ projectId }: { projectId: string }) {
             <div key={i} className="h-8 animate-pulse rounded bg-surface-hover" />
           ))}
         </div>
+      ) : isError ? (
+        <CardError message="Couldn't load custom events. Please retry." />
       ) : events.length === 0 ? (
         <div className="py-4 text-center">
           <p className="text-sm text-fg-muted">No custom events yet</p>
@@ -122,13 +135,13 @@ export default function DashboardPage() {
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const days = dateRangeToDays(dateRange);
 
-  const { data: todayMetrics, isLoading: metricsLoading } = useQuery({
+  const { data: todayMetrics, isLoading: metricsLoading, isError: metricsError } = useQuery({
     queryKey: metricsKeys.today(projectId),
     queryFn: () => api.get<TodayMetrics>(`/api/projects/${projectId}/metrics/today`),
     refetchInterval: 30_000,
   });
 
-  const { data: trend = [], isLoading: trendLoading } = useQuery({
+  const { data: trend = [], isLoading: trendLoading, isError: trendError } = useQuery({
     queryKey: metricsKeys.trend(projectId, days),
     queryFn: () => api.get<TrendPoint[]>(`/api/projects/${projectId}/metrics/trend`, { days }),
     enabled: dateRange !== 'today',
@@ -158,16 +171,26 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI metric cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <MetricCard label="Page views" value={todayMetrics?.views ?? 0} delta={todayMetrics?.viewsDelta} loading={metricsLoading} />
-        <MetricCard label="Unique visitors" value={todayMetrics?.visitors ?? 0} delta={todayMetrics?.visitorsDelta} loading={metricsLoading} />
-        <MetricCard label="Sessions" value={todayMetrics?.sessions ?? 0} loading={metricsLoading} />
-        <MetricCard label="Bounce rate" value={todayMetrics?.bounceRate ?? 0} format="percent" loading={metricsLoading} />
-      </div>
+      {metricsError ? (
+        <CardError message="Couldn't load today's metrics. Please retry." />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <MetricCard label="Page views" value={todayMetrics?.views ?? 0} delta={todayMetrics?.viewsDelta} loading={metricsLoading} />
+          <MetricCard label="Unique visitors" value={todayMetrics?.visitors ?? 0} delta={todayMetrics?.visitorsDelta} loading={metricsLoading} />
+          <MetricCard label="Sessions" value={todayMetrics?.sessions ?? 0} loading={metricsLoading} />
+          <MetricCard label="Bounce rate" value={todayMetrics?.bounceRate ?? 0} format="percent" loading={metricsLoading} />
+        </div>
+      )}
 
       {/* Trend chart */}
       {dateRange !== 'today' ? (
-        <TrendChart data={trend} days={days} loading={trendLoading} />
+        trendError ? (
+          <Card className="p-5">
+            <CardError message="Couldn't load the trend chart. Please retry." />
+          </Card>
+        ) : (
+          <TrendChart data={trend} days={days} loading={trendLoading} />
+        )
       ) : (
         <Card className="p-5">
           <p className="py-8 text-center text-sm text-fg-muted">Switch to 7d or 30d to see the trend chart</p>
