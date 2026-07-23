@@ -1,3 +1,4 @@
+import path from 'path';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -40,6 +41,21 @@ app.use('/api/projects', projectsRouter);
 app.use('/api/projects', metricsRouter);
 app.use('/api/projects', eventsRouter);
 app.use('/api/collect', collectRouter); // no rate limit, no global cors
+
+// Serve the tracking SDK as a public static asset. It is embedded via
+// <script src> on third-party sites, so it must be loadable cross-origin:
+// helmet's default Cross-Origin-Resource-Policy is "same-origin", which would
+// block that — override to "cross-origin" for this path only.
+// Path resolves to backend/public/sdk in both dev (src/..) and prod (dist/..).
+app.use(
+  '/sdk',
+  express.static(path.join(__dirname, '..', 'public', 'sdk'), {
+    maxAge: '1h',
+    setHeaders: (res) => {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
+  }),
+);
 
 app.use(errorHandler);
 

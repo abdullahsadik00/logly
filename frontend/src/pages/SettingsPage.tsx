@@ -45,8 +45,12 @@ export default function SettingsPage() {
     }
   }
 
+  // The SDK is served by the backend from /sdk; the snippet loads it from the
+  // API host so it also knows where to POST events. VITE_API_URL overrides the
+  // host in production (e.g. https://api.logly.io); defaults to the local API.
+  const sdkHost = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   const snippetCode = project
-    ? `<script async src="https://logly.io/sdk/logly.min.js" data-tracking-id="${project.trackingId}"></script>`
+    ? `<script async src="${sdkHost}/sdk/logly.min.js" data-tracking-id="${project.trackingId}"></script>`
     : '';
 
   const canDelete = project ? deleteConfirm === project.domain : false;
