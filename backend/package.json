@@ -9,7 +9,7 @@
     "build:sdk": "node scripts/build-sdk.mjs",
     "start": "node dist/index.js",
     "worker": "ts-node src/jobs/worker.ts",
-    "test": "vitest run",
+    "test": "node -r ts-node/register --test src/lib/__tests__/*.test.ts",
     "db:migrate": "prisma migrate dev",
     "db:seed": "ts-node prisma/seed.ts"
   },
@@ -41,7 +41,6 @@
     "nodemon": "^3.0.0",
     "prisma": "^5.0.0",
     "ts-node": "^10.9.0",
-    "typescript": "^5",
-    "vitest": "^4.1.10"
+    "typescript": "^5"
   }
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
 import { computeVisitorId } from '../lib/salt';
+import { getDeviceType } from '../lib/device';
 import { ApiError } from '../middleware/errorHandler';
 
 export const collectRouter = Router();
@@ -17,12 +18,6 @@ const collectSchema = z.object({
 });
 
 type CollectBody = z.infer<typeof collectSchema>;
-
-function getDeviceType(ua: string): string {
-  if (/Mobile/i.test(ua)) return 'mobile';
-  if (/Tablet/i.test(ua)) return 'tablet';
-  return 'desktop';
-}
 
 /** Best-effort client IP — used only to derive the visitor hash, never stored. */
 function getClientIp(req: Request): string {
