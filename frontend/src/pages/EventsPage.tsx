@@ -16,13 +16,13 @@ const TYPE_OPTIONS = [
 function TypeBadge({ type }: { type: EventRow['type'] }) {
   if (type === 'pageview') {
     return (
-      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-900/60 text-indigo-300">
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-info/15 text-info">
         pageview
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-900/60 text-emerald-300">
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-accent/15 text-accent">
       custom
     </span>
   );
@@ -47,11 +47,11 @@ function ActiveFilterBadge({
   onRemove: () => void;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-900/60 border border-indigo-700 text-indigo-300">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-info/15 border border-info/30 text-info">
       {label}
       <button
         onClick={onRemove}
-        className="hover:text-white transition ml-0.5"
+        className="hover:text-fg transition ml-0.5"
         aria-label={`Remove ${label} filter`}
       >
         ×
@@ -122,11 +122,11 @@ export default function EventsPage() {
         <div className="flex flex-wrap items-end gap-3">
           {/* Type filter */}
           <div>
-            <label className="block text-xs text-slate-500 mb-1">Type</label>
+            <label className="block text-xs text-fg-muted mb-1">Type</label>
             <select
               value={type}
               onChange={(e) => handleTypeChange(e.target.value)}
-              className="rounded-lg bg-slate-800 border border-slate-600 text-sm text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+              className="rounded-lg bg-surface border border-line-strong text-sm text-fg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent transition"
             >
               {TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -138,30 +138,30 @@ export default function EventsPage() {
 
           {/* From date */}
           <div>
-            <label className="block text-xs text-slate-500 mb-1">From</label>
+            <label className="block text-xs text-fg-muted mb-1">From</label>
             <input
               type="date"
               value={from}
               onChange={(e) => handleFromChange(e.target.value)}
-              className="rounded-lg bg-slate-800 border border-slate-600 text-sm text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition [color-scheme:dark]"
+              className="rounded-lg bg-surface border border-line-strong text-sm text-fg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent transition [color-scheme:dark]"
             />
           </div>
 
           {/* To date */}
           <div>
-            <label className="block text-xs text-slate-500 mb-1">To</label>
+            <label className="block text-xs text-fg-muted mb-1">To</label>
             <input
               type="date"
               value={to}
               onChange={(e) => handleToChange(e.target.value)}
-              className="rounded-lg bg-slate-800 border border-slate-600 text-sm text-white px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition [color-scheme:dark]"
+              className="rounded-lg bg-surface border border-line-strong text-sm text-fg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent transition [color-scheme:dark]"
             />
           </div>
 
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="text-sm text-slate-400 hover:text-white transition pb-1"
+              className="text-sm text-fg-secondary hover:text-fg transition pb-1"
             >
               Clear filters
             </button>
@@ -194,7 +194,7 @@ export default function EventsPage() {
 
         {/* Results summary */}
         {!isLoading && (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-fg-muted">
             {total.toLocaleString()} event{total !== 1 ? 's' : ''}
             {hasActiveFilters ? ' matching filters' : ''}
           </p>
@@ -202,17 +202,17 @@ export default function EventsPage() {
 
         {/* Error state */}
         {error && (
-          <div className="rounded-lg bg-red-950 border border-red-800 px-4 py-3 text-sm text-red-300">
+          <div className="rounded-lg bg-danger/10 border border-danger/30 px-4 py-3 text-sm text-danger">
             Failed to load events. Please try again.
           </div>
         )}
 
         {/* Table */}
-        <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-surface rounded-xl border border-line overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700 text-xs text-slate-500">
+                <tr className="border-b border-line text-xs text-fg-muted">
                   <th className="px-4 py-3 text-left font-medium">Time</th>
                   <th className="px-4 py-3 text-left font-medium">Type</th>
                   <th className="px-4 py-3 text-left font-medium">Page</th>
@@ -222,13 +222,13 @@ export default function EventsPage() {
                   <th className="px-4 py-3 text-left font-medium">Referrer</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50">
+              <tbody className="divide-y divide-line-subtle">
                 {isLoading
                   ? Array.from({ length: 10 }).map((_, i) => (
                       <tr key={i}>
                         {Array.from({ length: 7 }).map((__, j) => (
                           <td key={j} className="px-4 py-3">
-                            <div className="h-3 bg-slate-700 rounded animate-pulse" />
+                            <div className="h-3 bg-surface-hover rounded animate-pulse" />
                           </td>
                         ))}
                       </tr>
@@ -236,7 +236,7 @@ export default function EventsPage() {
                   : events.length === 0
                   ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-slate-500 text-sm">
+                      <td colSpan={7} className="px-4 py-12 text-center text-fg-muted text-sm">
                         No events found{hasActiveFilters ? ' for these filters' : ''}
                       </td>
                     </tr>
@@ -244,35 +244,35 @@ export default function EventsPage() {
                   : events.map((event) => (
                     <tr
                       key={event.id}
-                      className="hover:bg-slate-700/30 transition"
+                      className="hover:bg-surface-hover transition"
                     >
-                      <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap font-mono text-xs">
+                      <td className="px-4 py-2.5 text-fg-secondary whitespace-nowrap font-mono text-xs">
                         {formatTimestamp(event.createdAt)}
                       </td>
                       <td className="px-4 py-2.5">
                         <TypeBadge type={event.type} />
                       </td>
-                      <td className="px-4 py-2.5 text-slate-200 font-mono text-xs max-w-[200px] truncate">
+                      <td className="px-4 py-2.5 text-fg font-mono text-xs max-w-[200px] truncate">
                         {event.page}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-400">
+                      <td className="px-4 py-2.5 text-fg-secondary">
                         {event.country ?? (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-fg-faint">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-400 whitespace-nowrap">
+                      <td className="px-4 py-2.5 text-fg-secondary whitespace-nowrap">
                         {event.deviceType ?? (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-fg-faint">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-300">
+                      <td className="px-4 py-2.5 text-fg-secondary">
                         {event.eventName ?? (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-fg-faint">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-slate-400 font-mono text-xs max-w-[180px] truncate">
+                      <td className="px-4 py-2.5 text-fg-secondary font-mono text-xs max-w-[180px] truncate">
                         {event.referrer ?? (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-fg-faint">—</span>
                         )}
                       </td>
                     </tr>
@@ -283,22 +283,22 @@ export default function EventsPage() {
 
           {/* Pagination */}
           {!isLoading && total > 0 && (
-            <div className="border-t border-slate-700 px-4 py-3 flex items-center justify-between">
-              <p className="text-xs text-slate-500">
+            <div className="border-t border-line px-4 py-3 flex items-center justify-between">
+              <p className="text-xs text-fg-muted">
                 Page {page} of {totalPages} — {total.toLocaleString()} total
               </p>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="rounded-lg border border-slate-600 hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-xs px-3 py-1.5 transition"
+                  className="rounded-lg border border-line-strong hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed text-fg-secondary text-xs px-3 py-1.5 transition"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="rounded-lg border border-slate-600 hover:border-slate-500 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 text-xs px-3 py-1.5 transition"
+                  className="rounded-lg border border-line-strong hover:border-line-strong disabled:opacity-40 disabled:cursor-not-allowed text-fg-secondary text-xs px-3 py-1.5 transition"
                 >
                   Next
                 </button>

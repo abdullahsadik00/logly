@@ -5,6 +5,9 @@ node_modules/
 dist/
 build/
 
+# Generated tracking SDK bundle (built via `npm run build:sdk`)
+backend/public/
+
 # Environment (never commit real secrets; .env.example is tracked)
 .env
 .env.local

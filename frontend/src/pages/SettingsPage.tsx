@@ -45,8 +45,12 @@ export default function SettingsPage() {
     }
   }
 
+  // The SDK is served by the backend from /sdk; the snippet loads it from the
+  // API host so it also knows where to POST events. VITE_API_URL overrides the
+  // host in production (e.g. https://api.logly.io); defaults to the local API.
+  const sdkHost = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   const snippetCode = project
-    ? `<script async src="https://logly.io/sdk/logly.min.js" data-tracking-id="${project.trackingId}"></script>`
+    ? `<script async src="${sdkHost}/sdk/logly.min.js" data-tracking-id="${project.trackingId}"></script>`
     : '';
 
   const canDelete = project ? deleteConfirm === project.domain : false;
@@ -56,30 +60,30 @@ export default function SettingsPage() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-slate-800 rounded-xl border border-slate-700 p-5 animate-pulse h-32" />
+              <div key={i} className="bg-surface rounded-xl border border-line p-5 animate-pulse h-32" />
             ))}
           </div>
         ) : project ? (
           <>
             {/* Project info */}
-            <section className="bg-slate-800 rounded-xl border border-slate-700 p-5">
-              <h2 className="text-sm font-semibold text-slate-300 mb-4">Project details</h2>
+            <section className="bg-surface rounded-xl border border-line p-5">
+              <h2 className="text-sm font-semibold text-fg-secondary mb-4">Project details</h2>
               <dl className="space-y-3">
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <dt className="text-sm text-slate-500">Name</dt>
-                  <dd className="text-sm text-white font-medium">{project.name}</dd>
+                <div className="flex justify-between items-center py-1 border-b border-line-subtle">
+                  <dt className="text-sm text-fg-muted">Name</dt>
+                  <dd className="text-sm text-fg font-medium">{project.name}</dd>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <dt className="text-sm text-slate-500">Domain</dt>
-                  <dd className="text-sm text-white font-mono">{project.domain}</dd>
+                <div className="flex justify-between items-center py-1 border-b border-line-subtle">
+                  <dt className="text-sm text-fg-muted">Domain</dt>
+                  <dd className="text-sm text-fg font-mono">{project.domain}</dd>
                 </div>
-                <div className="flex justify-between items-center py-1 border-b border-slate-700/50">
-                  <dt className="text-sm text-slate-500">Tracking ID</dt>
-                  <dd className="text-xs text-slate-300 font-mono">{project.trackingId}</dd>
+                <div className="flex justify-between items-center py-1 border-b border-line-subtle">
+                  <dt className="text-sm text-fg-muted">Tracking ID</dt>
+                  <dd className="text-xs text-fg-secondary font-mono">{project.trackingId}</dd>
                 </div>
                 <div className="flex justify-between items-center py-1">
-                  <dt className="text-sm text-slate-500">Created</dt>
-                  <dd className="text-sm text-slate-300">
+                  <dt className="text-sm text-fg-muted">Created</dt>
+                  <dd className="text-sm text-fg-secondary">
                     {new Date(project.createdAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -91,28 +95,28 @@ export default function SettingsPage() {
             </section>
 
             {/* Tracking snippet */}
-            <section className="bg-slate-800 rounded-xl border border-slate-700 p-5">
+            <section className="bg-surface rounded-xl border border-line p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-300">Tracking snippet</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Add this to the <code className="bg-slate-900 px-1 rounded">&lt;head&gt;</code> of every page you want to track.
+                  <h2 className="text-sm font-semibold text-fg-secondary">Tracking snippet</h2>
+                  <p className="text-xs text-fg-muted mt-0.5">
+                    Add this to the <code className="bg-base px-1 rounded">&lt;head&gt;</code> of every page you want to track.
                   </p>
                 </div>
                 <button
                   onClick={() => copyToClipboard(snippetCode)}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 transition flex-shrink-0"
+                  className="text-xs text-accent hover:text-accent/80 transition flex-shrink-0"
                 >
                   {copied ? '✓ Copied' : 'Copy'}
                 </button>
               </div>
-              <pre className="bg-slate-900 rounded-lg p-3 text-xs text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap break-all">
+              <pre className="bg-base rounded-lg p-3 text-xs text-fg-secondary font-mono overflow-x-auto whitespace-pre-wrap break-all">
                 {snippetCode}
               </pre>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-fg-muted">
                 The script is loaded asynchronously and will not block your page render.
                 To track custom events, call{' '}
-                <code className="bg-slate-900 px-1 rounded">
+                <code className="bg-base px-1 rounded">
                   window.logly.track('EventName', {'{ key: "value" }'})
                 </code>{' '}
                 anywhere in your app.
@@ -120,17 +124,17 @@ export default function SettingsPage() {
             </section>
 
             {/* Danger zone */}
-            <section className="bg-slate-800 rounded-xl border border-red-900/50 p-5">
-              <h2 className="text-sm font-semibold text-red-400 mb-1">Danger zone</h2>
-              <p className="text-sm text-slate-400 mb-4">
+            <section className="bg-surface rounded-xl border border-danger/30 p-5">
+              <h2 className="text-sm font-semibold text-danger mb-1">Danger zone</h2>
+              <p className="text-sm text-fg-secondary mb-4">
                 Permanently delete this project and all its events, stats, and alerts.
                 This action cannot be undone.
               </p>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-slate-500 mb-1.5">
-                    Type <span className="font-mono text-slate-300">{project.domain}</span> to confirm
+                  <label className="block text-xs text-fg-muted mb-1.5">
+                    Type <span className="font-mono text-fg-secondary">{project.domain}</span> to confirm
                   </label>
                   <input
                     type="text"
@@ -140,12 +144,12 @@ export default function SettingsPage() {
                       setDeleteError(null);
                     }}
                     placeholder={project.domain}
-                    className="w-full rounded-lg bg-slate-900 border border-slate-600 px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
+                    className="w-full rounded-lg bg-base border border-line-strong px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:ring-2 focus:ring-danger focus:border-transparent transition"
                   />
                 </div>
 
                 {deleteError && (
-                  <div role="alert" className="rounded-lg bg-red-950 border border-red-800 px-3 py-2 text-sm text-red-300">
+                  <div role="alert" className="rounded-lg bg-danger/10 border border-danger/30 px-3 py-2 text-sm text-danger">
                     {deleteError}
                   </div>
                 )}
@@ -153,7 +157,7 @@ export default function SettingsPage() {
                 <button
                   onClick={() => deleteMutation.mutate()}
                   disabled={!canDelete || deleteMutation.isPending}
-                  className="rounded-lg bg-red-700 hover:bg-red-600 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm font-medium px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="rounded-lg bg-danger text-white hover:brightness-105 disabled:opacity-disabled disabled:cursor-not-allowed text-sm font-medium px-4 py-2 transition focus:outline-none focus:ring-2 focus:ring-danger"
                 >
                   {deleteMutation.isPending ? 'Deleting…' : 'Delete project permanently'}
                 </button>
@@ -161,9 +165,9 @@ export default function SettingsPage() {
             </section>
           </>
         ) : (
-          <div className="text-center py-20 text-slate-500 text-sm">
+          <div className="text-center py-20 text-fg-muted text-sm">
             Project not found.{' '}
-            <Link to="/projects" className="text-indigo-400 hover:underline">
+            <Link to="/projects" className="text-accent hover:underline">
               Go back
             </Link>
           </div>

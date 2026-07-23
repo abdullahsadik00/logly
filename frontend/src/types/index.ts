@@ -22,9 +22,12 @@ export interface TodayMetrics {
   visitors: number;
   sessions: number;
   bounceRate: number;
-  /** Percentage change vs yesterday. Positive = growth. */
-  viewsDelta: number;
-  visitorsDelta: number;
+  /**
+   * Percentage change vs yesterday. Positive = growth. Omitted by the API when
+   * there is no prior-day baseline, so the UI hides the delta badge.
+   */
+  viewsDelta?: number;
+  visitorsDelta?: number;
 }
 
 export interface TrendPoint {
