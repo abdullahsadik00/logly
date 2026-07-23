@@ -10,6 +10,7 @@ export const metricsKeys = {
     ['metrics', projectId, 'trend', days] as const,
   pages: (projectId: string) => ['metrics', projectId, 'pages'] as const,
   events: (projectId: string) => ['metrics', projectId, 'events'] as const,
+  revenueBySource: (projectId: string) => ['metrics', projectId, 'revenue-by-source'] as const,
 };
 
 export const eventKeys = {

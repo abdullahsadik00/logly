@@ -25,10 +25,12 @@ model Project {
   trackingId  String   @unique @default(uuid()) @map("tracking_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  events      Event[]
-  dailyStats  DailyStat[]
-  alerts      Alert[]
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events       Event[]
+  dailyStats   DailyStat[]
+  alerts       Alert[]
+  attributions Attribution[]
+  payments     Payment[]
 
   @@index([userId])
   @@map("projects")
@@ -46,13 +48,52 @@ model Event {
   eventProps  Json?    @map("event_props")
   visitorId   String?  @map("visitor_id")
   sessionId   String?  @map("session_id")
+  attributionRef String? @map("attribution_ref")
   createdAt   DateTime @default(now()) @map("created_at")
 
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, createdAt])
   @@index([projectId, type])
+  @@index([attributionRef])
   @@map("events")
+}
+
+// Revenue attribution (Move 1, v0). An Attribution row records that an opaque
+// attribution_ref (minted by the SDK, stored on the visit's Event and passed to
+// Stripe as client_reference_id) belongs to a project. The traffic `source` is
+// NOT stored here — it is derived at read time from the observed Event that
+// carries the same ref (server-side, from data Logly already recorded), so a
+// forged/client-supplied source can never poison it.
+model Attribution {
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  attributionRef String   @unique @map("attribution_ref")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  project        Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  payments       Payment[]
+
+  @@index([projectId, createdAt])
+  @@map("attributions")
+}
+
+// A Stripe payment (or refund) joined back to an attribution_ref. amountCents is
+// negative for refunds. stripeEventId is unique so redelivered webhooks are no-ops.
+model Payment {
+  id             String   @id @default(uuid())
+  projectId      String   @map("project_id")
+  attributionRef String?  @map("attribution_ref")
+  stripeEventId  String   @unique @map("stripe_event_id")
+  amountCents    Int      @map("amount_cents")
+  currency       String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attribution Attribution? @relation(fields: [attributionRef], references: [attributionRef])
+
+  @@index([projectId, createdAt])
+  @@map("payments")
 }
 
 model DailyStat {

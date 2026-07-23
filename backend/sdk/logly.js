@@ -99,11 +99,35 @@
     }
   }
 
+  // --- Attribution ref (revenue attribution, Move 1) -----------------------
+  // An opaque, per-session token that ties an anonymous visit to a future
+  // paying account WITHOUT storing any durable cross-day identity. It lives in
+  // sessionStorage (same posture as the session id — cleared when the tab
+  // closes, never a cookie, never cross-site). The customer's signup code reads
+  // it via window.logly.getAttribution() and passes it to their backend + to
+  // Stripe as client_reference_id. Logly derives the traffic source server-side
+  // from the visit this ref is attached to — the ref itself carries no data.
+  var ATTR_KEY = 'logly_attr';
+  function attributionRef() {
+    try {
+      var ref = window.sessionStorage.getItem(ATTR_KEY);
+      if (!ref) {
+        ref = uuid();
+        window.sessionStorage.setItem(ATTR_KEY, ref);
+      }
+      return ref;
+    } catch (_e) {
+      // Storage blocked: mint an ephemeral ref so this pageview is still tagged.
+      return uuid();
+    }
+  }
+
   function base(type) {
     var p = {
       type: type,
       page: window.location.href,
       sessionId: sessionId(),
+      attributionRef: attributionRef(),
     };
     if (document.referrer) p.referrer = document.referrer;
     return p;
@@ -152,7 +176,16 @@
   // Supports an optional stub snippet: window.logly = { q: [] };
   // window.logly.q.push(['EventName', {..}]) before the SDK loads.
   var queued = window.logly && Array.isArray(window.logly.q) ? window.logly.q : null;
-  window.logly = { track: track, trackPageview: trackPageview };
+  // getAttribution() returns the current opaque attribution ref. Call it in your
+  // signup handler and pass the value to your backend (POST /api/attribution)
+  // and to Stripe Checkout as `client_reference_id`.
+  window.logly = {
+    track: track,
+    trackPageview: trackPageview,
+    getAttribution: function () {
+      return { attributionRef: attributionRef() };
+    },
+  };
   if (queued) {
     queued.forEach(function (args) {
       try {
