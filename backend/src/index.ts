@@ -1,4 +1,8 @@
 import path from 'path';
+// Side-effect import: patches Express 4 so a `throw` inside an async route handler
+// is routed to errorHandler instead of becoming an unhandled rejection that hangs
+// the connection. Must be imported before any routes are registered.
+import 'express-async-errors';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -70,8 +74,12 @@ app.use(
 app.use(errorHandler);
 
 const PORT = process.env.PORT ?? 3001;
-app.listen(PORT, () => {
-  console.log(`Logly backend running on port ${PORT}`);
-});
+// Don't bind a port under test: integration tests import { app } into supertest,
+// which spins up its own ephemeral server per request.
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Logly backend running on port ${PORT}`);
+  });
+}
 
 export { app };

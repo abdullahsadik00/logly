@@ -1,57 +1,11 @@
-import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
 import express from 'express';
 import { prisma } from '../lib/prisma';
 import { resolveProjectId } from '../lib/resolveProject';
+import { verifyStripeSignature } from '../lib/stripeSignature';
 import { ApiError } from '../middleware/errorHandler';
 
 export const stripeWebhookRouter = Router();
-
-const TOLERANCE_SECONDS = 5 * 60;
-
-/**
- * Verify a Stripe webhook signature manually (no stripe SDK dependency).
- * Header shape: `t=<unix-ts>,v1=<hex-hmac>[,v1=<hmac>...]`. The signed payload
- * is `${t}.${rawBody}`, HMAC-SHA256 with the endpoint secret. We enforce a
- * 5-minute timestamp tolerance and compare in constant time.
- * Verified against https://docs.stripe.com/webhooks/signature (2026-07-24).
- */
-function verifyStripeSignature(rawBody: Buffer, header: string | undefined, secret: string): void {
-  if (!header) throw new ApiError(400, 'Missing Stripe-Signature header');
-
-  let timestamp = '';
-  const signatures: string[] = [];
-  for (const part of header.split(',')) {
-    const [k, v] = part.split('=');
-    if (k === 't') timestamp = v;
-    else if (k === 'v1' && v) signatures.push(v);
-  }
-  if (!timestamp || signatures.length === 0) {
-    throw new ApiError(400, 'Malformed Stripe-Signature header');
-  }
-
-  const age = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
-  if (!Number.isFinite(age) || age > TOLERANCE_SECONDS) {
-    throw new ApiError(400, 'Stripe signature timestamp outside tolerance');
-  }
-
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.${rawBody.toString('utf8')}`)
-    .digest('hex');
-  const expectedBuf = Buffer.from(expected, 'hex');
-
-  const match = signatures.some((sig) => {
-    let sigBuf: Buffer;
-    try {
-      sigBuf = Buffer.from(sig, 'hex');
-    } catch {
-      return false;
-    }
-    return sigBuf.length === expectedBuf.length && crypto.timingSafeEqual(sigBuf, expectedBuf);
-  });
-  if (!match) throw new ApiError(400, 'Stripe signature verification failed');
-}
 
 interface StripeEventShape {
   id: string;
@@ -72,37 +26,33 @@ stripeWebhookRouter.post(
     const projectId = await resolveProjectId(req.params.trackingId);
     if (!projectId) throw new ApiError(404, 'Unknown tracking ID');
 
-    const rawBody = req.body as Buffer;
+    const rawBody = req.body;
+    if (!Buffer.isBuffer(rawBody)) {
+      // express.raw only populates a Buffer when Content-Type is application/json;
+      // a mismatched/empty content-type would otherwise crash the .toString() below.
+      throw new ApiError(400, 'Expected raw application/json body');
+    }
     verifyStripeSignature(rawBody, req.headers['stripe-signature'] as string | undefined, secret);
 
     const event = JSON.parse(rawBody.toString('utf8')) as StripeEventShape;
-
-    // Idempotency: the unique stripe_event_id makes a redelivered event a no-op.
-    const already = await prisma.payment.findUnique({ where: { stripeEventId: event.id } });
-    if (already) {
-      res.status(200).json({ received: true, duplicate: true });
-      return;
-    }
 
     let amountCents: number | null = null;
     let currency: string | null = null;
     let attributionRef: string | null = null;
 
+    // v0 handles only completed payments. Refunds are deliberately deferred: Stripe's
+    // charge.refunded carries a CUMULATIVE amount_refunded and fires per partial refund,
+    // so naive handling double-counts. A follow-up will do delta-based refunds with
+    // re-attribution to the original source. Until then, refunds are acknowledged and
+    // ignored (not stored) so Stripe stops retrying.
     if (event.type === 'checkout.session.completed') {
       const s = event.data.object;
       amountCents = typeof s.amount_total === 'number' ? s.amount_total : null;
       currency = typeof s.currency === 'string' ? s.currency : null;
       attributionRef =
         typeof s.client_reference_id === 'string' ? s.client_reference_id : null;
-    } else if (event.type === 'charge.refunded') {
-      const c = event.data.object;
-      // Refund nets against revenue → store as a negative amount.
-      amountCents = typeof c.amount_refunded === 'number' ? -c.amount_refunded : null;
-      currency = typeof c.currency === 'string' ? c.currency : null;
-      // Charges don't carry client_reference_id; refund attributes at project level.
-      attributionRef = null;
     } else {
-      // Unhandled event types are acknowledged so Stripe stops retrying.
+      // Unhandled / deferred event types (incl. refunds) are acknowledged, not stored.
       res.status(200).json({ received: true, ignored: event.type });
       return;
     }
@@ -120,14 +70,19 @@ stripeWebhookRouter.post(
       linkedRef = attr ? attributionRef : null;
     }
 
-    await prisma.payment.create({
-      data: {
+    // Idempotency via the unique stripe_event_id — upsert, not check-then-create,
+    // so two near-simultaneous redeliveries of the same event can't race into a
+    // P2002 (the update branch is a no-op).
+    await prisma.payment.upsert({
+      where: { stripeEventId: event.id },
+      create: {
         projectId,
         attributionRef: linkedRef,
         stripeEventId: event.id,
         amountCents,
         currency,
       },
+      update: {},
     });
 
     res.status(200).json({ received: true });

@@ -240,8 +240,15 @@ metricsRouter.get(
     const project = await verifyOwnership(req.params.id, req.userId);
     const projectId = project.id;
 
-    const from = req.query.from ? new Date(String(req.query.from)) : new Date(0);
-    const to = req.query.to ? new Date(String(req.query.to)) : new Date();
+    // Guard against `?from=abc` (or a repeated param → array): an Invalid Date
+    // would reach Prisma and throw. Fall back to the sensible default instead.
+    const parseDate = (v: unknown, fallback: Date): Date => {
+      if (typeof v !== 'string') return fallback;
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? fallback : d;
+    };
+    const from = parseDate(req.query.from, new Date(0));
+    const to = parseDate(req.query.to, new Date());
 
     const payments = await prisma.payment.findMany({
       where: { projectId, createdAt: { gte: from, lte: to } },
