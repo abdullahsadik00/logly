@@ -74,8 +74,12 @@ app.use(
 app.use(errorHandler);
 
 const PORT = process.env.PORT ?? 3001;
-app.listen(PORT, () => {
-  console.log(`Logly backend running on port ${PORT}`);
-});
+// Don't bind a port under test: integration tests import { app } into supertest,
+// which spins up its own ephemeral server per request.
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Logly backend running on port ${PORT}`);
+  });
+}
 
 export { app };
